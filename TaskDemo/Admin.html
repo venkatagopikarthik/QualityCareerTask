@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Portal</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 20px;
+            background-color: #f4f4f4;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        .login-form, .employee-management {
+            display: none;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        input {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #4CAF50;
+            color: white;
+            padding: 10px 15px;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 5px;
+        }
+        button:hover {
+            background-color: #45a049;
+        }
+        .edit-btn {
+            background-color: #2196F3;
+        }
+        .delete-btn {
+            background-color: #f44336;
+        }
+        .employee-list {
+            margin-top: 20px;
+        }
+        .employee-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .error {
+            color: red;
+            margin-top: 5px;
+        }
+        .edit-form {
+            display: none;
+            margin-top: 10px;
+            padding: 10px;
+            background-color: #f9f9f9;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div id="loginForm" class="login-form">
+            <h2>Admin Login</h2>
+            <div class="form-group">
+                <label for="adminId">Admin ID:</label>
+                <input type="text" id="adminId" required>
+            </div>
+            <div class="form-group">
+                <label for="password">Password:</label>
+                <input type="password" id="password" required>
+            </div>
+            <button onclick="login()">Login</button>
+            <p id="loginError" class="error"></p>
+        </div>
+
+        <div id="employeeManagement" class="employee-management">
+            <h2>Employee Management</h2>
+            <div class="form-group">
+                <label for="employeeName">Employee Name:</label>
+                <input type="text" id="employeeName" required>
+            </div>
+            <div class="form-group">
+                <label for="employeeId">Employee ID:</label>
+                <input type="text" id="employeeId" required>
+            </div>
+            <div class="form-group">
+                <label for="employeePassword">Employee Password:</label>
+                <input type="password" id="employeePassword" required>
+            </div>
+            <button onclick="addEmployee()">Add Employee</button>
+            
+            <div class="employee-list" id="employeeList">
+                <!-- Employee list will be populated here -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const ADMIN_ID = "admin";
+        const ADMIN_PASSWORD = "admin123";
+
+        window.onload = function() {
+            loadEmployees();
+        };
+
+        function loadEmployees() {
+            const storedEmployees = JSON.parse(localStorage.getItem('employees') || '[]');
+            const employeeList = document.getElementById('employeeList');
+            employeeList.innerHTML = '';
+
+            storedEmployees.forEach(employee => {
+                const employeeDiv = document.createElement('div');
+                employeeDiv.className = 'employee-item';
+                employeeDiv.innerHTML = `
+                    <div>
+                        <span>${employee.name} (ID: ${employee.id})</span>
+                    </div>
+                    <div>
+                        <button class="edit-btn" onclick="editEmployee(this)">Edit</button>
+                        <button class="delete-btn" onclick="removeEmployee(this)">Remove</button>
+                    </div>
+                    <div class="edit-form">
+                        <div class="form-group">
+                            <label>Name:</label>
+                            <input type="text" class="edit-name" value="${employee.name}">
+                        </div>
+                        <div class="form-group">
+                            <label>ID:</label>
+                            <input type="text" class="edit-id" value="${employee.id}">
+                        </div>
+                        <div class="form-group">
+                            <label>Password:</label>
+                            <input type="password" class="edit-password" value="${employee.password}">
+                        </div>
+                        <button onclick="saveEdit(this)">Save</button>
+                        <button onclick="cancelEdit(this)">Cancel</button>
+                    </div>
+                `;
+                employeeList.appendChild(employeeDiv);
+            });
+        }
+
+        function login() {
+            const adminId = document.getElementById('adminId').value;
+            const password = document.getElementById('password').value;
+            const loginError = document.getElementById('loginError');
+
+            if (adminId === ADMIN_ID && password === ADMIN_PASSWORD) {
+                document.getElementById('loginForm').style.display = 'none';
+                document.getElementById('employeeManagement').style.display = 'block';
+                loginError.textContent = '';
+                loadEmployees();
+            } else {
+                loginError.textContent = 'Invalid admin ID or password';
+            }
+        }
+
+        function addEmployee() {
+            const name = document.getElementById('employeeName').value;
+            const id = document.getElementById('employeeId').value;
+            const password = document.getElementById('employeePassword').value;
+
+            if (!name || !id || !password) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            const storedEmployees = JSON.parse(localStorage.getItem('employees') || '[]');
+            
+            if (storedEmployees.some(emp => emp.id === id)) {
+                alert('Employee ID already exists');
+                return;
+            }
+
+            storedEmployees.push({ name, id, password });
+            localStorage.setItem('employees', JSON.stringify(storedEmployees));
+            loadEmployees();
+
+            document.getElementById('employeeName').value = '';
+            document.getElementById('employeeId').value = '';
+            document.getElementById('employeePassword').value = '';
+        }
+
+        function removeEmployee(button) {
+            const employeeItem = button.closest('.employee-item');
+            const id = employeeItem.querySelector('span').textContent.match(/\(ID: (.*?)\)/)[1];
+            
+            const storedEmployees = JSON.parse(localStorage.getItem('employees') || '[]');
+            const updatedEmployees = storedEmployees.filter(emp => emp.id !== id);
+            localStorage.setItem('employees', JSON.stringify(updatedEmployees));
+            loadEmployees();
+        }
+
+        function editEmployee(button) {
+            const employeeItem = button.closest('.employee-item');
+            const editForm = employeeItem.querySelector('.edit-form');
+            editForm.style.display = 'block';
+        }
+
+        function saveEdit(button) {
+            const employeeItem = button.closest('.employee-item');
+            const editForm = employeeItem.querySelector('.edit-form');
+            const newName = editForm.querySelector('.edit-name').value;
+            const newId = editForm.querySelector('.edit-id').value;
+            const newPassword = editForm.querySelector('.edit-password').value;
+
+            if (!newName || !newId || !newPassword) {
+                alert('Please fill in all fields');
+                return;
+            }
+
+            const storedEmployees = JSON.parse(localStorage.getItem('employees') || '[]');
+            const oldId = employeeItem.querySelector('span').textContent.match(/\(ID: (.*?)\)/)[1];
+            
+            const updatedEmployees = storedEmployees.map(emp => {
+                if (emp.id === oldId) {
+                    return { name: newName, id: newId, password: newPassword };
+                }
+                return emp;
+            });
+            
+            localStorage.setItem('employees', JSON.stringify(updatedEmployees));
+            loadEmployees();
+        }
+
+        function cancelEdit(button) {
+            const editForm = button.closest('.edit-form');
+            editForm.style.display = 'none';
+        }
+
+        document.getElementById('loginForm').style.display = 'block';
+    </script>
+</body>
+</html>
